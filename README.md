@@ -114,7 +114,7 @@ The following tools were used in the construction of the project:
 
 #### **Server**  ([Nodejs](https://nodejs.org/en/)  +  [TypeScript](https://www.typescriptlang.org/))
 
-- **[Prisma](https://www.prisma.io/)**
+- **[Firestore](https://firebase.google.com/docs/firestore)**
 - **[Nodemailer](https://nodemailer.com/about/)**
 - **[Expressjs](https://expressjs.com/pt-br/)**
 
