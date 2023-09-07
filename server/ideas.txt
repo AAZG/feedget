@@ -1,0 +1,112 @@
+emailService.ts
+
+
+
+
+//////////// Email
+import AWS from 'aws-sdk';
+
+const ses = new AWS.SES({
+	region: 'us-east-1' // Replace with the region where you configured SES
+});
+
+export const sendEmail = async (to: string = 'hola@cunimetal.com', name: string = 'Cunimetal', feedback?: object ) => {
+	let result;
+	let templateData;
+	if (feedback) {
+		const { type, comment, screenshot, current_timestamp} = feedback;
+		let templateData = JSON.stringify({
+			type,
+			comment,
+			current_timestamp,
+			screenshot
+			}
+			);
+	  } else {
+		let templateData = JSON.stringify({name}); // JSON.stringify({name}) is equal `{ "name": "${name}" }`;
+	};
+	const params: AWS.SES.SendTemplatedEmailRequest = {
+		Destination: {
+			ToAddresses: [to]
+		},
+		Source: 'hola@cunimetal.com', // Replace with the email address that you want to send from
+		// Template: {
+		Template: `generated-match-template-${process.env.stage}`,
+		// },
+		TemplateData: templateData,
+		// SourceArn: 'Cuni Metal',
+		ConfigurationSetName: `ses-config-${process.env.stage}`
+	};
+
+	try {
+		result = await ses.sendTemplatedEmail(params).promise();
+		return 'OK';
+	} catch (err) {
+		console.error(err);
+		return 'FAIL';
+	}
+};
+
+
+
+
+
+
+--------------------------------
+
+
+sendEmailFeedback.ts
+
+import commonMiddleware from '../../../utils/commonMiddleware';
+import {sendEmail} from '../emailService';
+
+const response = async (event) => {
+    const { type, comment, screenshot, current_timestamp} = event.body;
+	
+	const sentEmail = await sendEmail(undefined, undefined, );
+
+	return {
+		statusCode: 200,
+		body: JSON.stringify(sentEmail)
+	};
+};
+
+export const handler = commonMiddleware(response);
+
+
+
+
+
+
+
+
+------------------------------------------------------------------
+
+
+Cognito.yml
+
+
+
+
+
+  FeedbackTemplate:
+    Type: AWS::SES::Template
+    Properties:
+      Template:
+        TemplateName: feedback-template-${self:provider.stage}
+        HtmlPart: 
+        '<h1>Hola, {{type}} {{name}} {{name}} {{name}}</h1>
+        <p>Tenemos un nuevo feedback. Hemos encontrado un comprador interesado en los minerales que deseas vender. Revísalo en la app, en la opción Matches.</p>
+        <br>
+        <a href="https://www.cunimetal.com" target="_blank"><img src={{}} width="100px" height="auto" />
+        </a>
+        <br>
+        <p>El mercado de los minerales.</p>'
+        SubjectPart: 'Nuevo feedback 😏'
+
+        # '<div style="font-family: sans-serif; font-size: 16px; color: #111">
+        # <p>Tipo do feedback: ${type}</p>
+        # <p>Comentário: ${comment}</p>
+        # <p>Fecha: ${current_timestamp}</p>
+        # <img src="${screenshot}" border="1" style="max-width:100%;width:auto;height:auto;"/>
+        # </div>'
